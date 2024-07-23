@@ -1,0 +1,37 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - stg
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up environment
+      run: |
+        echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> $GITHUB_ENV
+        echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> $GITHUB_ENV
+        echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> $GITHUB_ENV
+        echo "DB_DATABASE=${{ secrets.DB_DATABASE }}" >> $GITHUB_ENV
+        echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> $GITHUB_ENV
+        echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> $GITHUB_ENV
+        echo "AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }}" >> $GITHUB_ENV
+        echo "AWS_ACCESS_SECRET=${{ secrets.AWS_ACCESS_SECRET }}" >> $GITHUB_ENV
+        echo "AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }}" >> $GITHUB_ENV
+
+    - name: Replace variables in YAML
+      run: |
+        envsubst < kubernetes/k8s/deployment.yaml > kubernetes/k8s/deployment_temp.yaml
+        mv kubernetes/k8s/deployment_temp.yaml kubernetes/k8s/deployment.yaml
+
+    - name: Deploy to Kubernetes
+      # Exemplo usando kubectl; ajuste conforme necessário para o seu processo de deploy
+      run: |
+        kubectl apply -f kubernetes/k8s/deployment.yaml
